@@ -1,0 +1,29 @@
+#!/bin/bash
+
+cmd=$(cat ~/.config/sxhkd/sxhkdrc \
+    | awk \
+'
+BEGIN {
+    OFS="\t"
+}
+/^# / {
+    comment=substr($0,3)
+}
+
+/^[a-zA-Z]/ {
+    hotkey=$0
+}
+
+/^\t#?/ {
+    $0=substr($0,2)
+    gsub(/^#[ ]+/,"",$0)
+    cmd=$0
+    print comment, hotkey, cmd;
+    comment=""
+    hotkey=""
+}' \
+    | column -t -o$'\t' -s $'\t' \
+    | rofi -dmenu -no-disable-history -p "❯ " \
+    | awk -F$'\t' '{ print $3 }')
+
+eval "$cmd"

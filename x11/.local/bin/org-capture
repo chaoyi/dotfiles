@@ -1,0 +1,32 @@
+#!/usr/bin/bash
+
+# chaoyi: copy from ~/.emacs.d/bin/org-capture, edited to quote input
+
+# Open an org-capture popup frame from the shell. This opens a temporary emacs
+# daemon if emacs isn't already running.
+#
+# Usage: org-capture [-k KEY] [MESSAGE]
+# Examples:
+#   org-capture -k n "To the mind that is still, the whole universe surrenders."
+
+set -e
+
+# org-capture key mapped to argument flags
+# keys=$(emacsclient -e "(+org-capture-available-keys)" | cut -d '"' -f2)
+while getopts "hk:" opt; do
+  key="\"$OPTARG\""
+  break
+done
+shift $((OPTIND-1))
+
+if [ -t 0 ]; then
+    str="$*"
+else
+    str=$(cat)
+    str=${str//\\/\\\\}
+    str=${str//\"/\\\"}
+fi
+
+emacsclient \
+  -c -F '((name . "doom-capture") (width . 70) (height . 25) (transient . t))' \
+  -e "(+org-capture/open-frame \"$str\" ${key:-nil})"

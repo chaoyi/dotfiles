@@ -1,0 +1,3 @@
+#!/bin/sh
+
+bspc rule -a \* -o desktop=$(bspc query -D -d 'next.!occupied.local') follow=on

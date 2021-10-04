@@ -1,0 +1,83 @@
+# wezterm:
+#   repo: wez/wezterm
+#   file: wezterm-@VER@.Debian11.deb
+#   install: |
+#     echo installing $name $ver
+#     sudo apt install -y ./$file
+
+sarasa:
+  repo: be5invis/Sarasa-Gothic
+  file: sarasa-gothic-ttc-@VER@.7z
+  install: |
+    7zr x -aoa -o$HOME/.local/share/fonts/ ./$file
+
+literata:
+  repo: googlefonts/literata
+  file: Literata-@VER@.zip
+  install: |
+    unzip -d$HOME/.local/share/fonts/ -oj ./$file 'static/ttf/Literata12pt-*'
+
+touchegg:
+  repo: JoseExposito/touchegg
+  file: touchegg_@VER@_amd64.deb
+  install: |
+    echo installing $name $ver
+    sudo apt install -y ./$file
+
+touche:
+  repo: JoseExposito/touche
+  file: touche_@VER@_amd64.deb
+  install: |
+    echo installing $name $ver
+    sudo apt install -y ./$file
+
+ripgrep:
+  repo: BurntSushi/ripgrep
+  file: ripgrep_@VER@_amd64.deb
+  install: |
+    echo installing $name $ver
+    sudo apt install -y ./$file
+
+fzf:
+  repo: junegunn/fzf
+  file: fzf-@VER@-linux_amd64.tar.gz
+  install: |
+    echo installing $name $ver
+    tar zxvf ./$file fzf
+    mv -v fzf $HOME/.local/bin/
+
+fd:
+  repo: sharkdp/fd
+  file: fd_@VER@_amd64.deb
+  install: |
+    echo installing $name $ver
+    sudo apt install -y ./$file
+
+delta:
+  repo: dandavison/delta
+  file: git-delta_@VER@_amd64.deb
+  install: |
+    echo installing $name $ver
+    sudo apt install -y ./$file
+
+bat:
+  repo: sharkdp/bat
+  file: bat_@VER@_amd64.deb
+  install: |
+    echo installing $name $ver
+    sudo apt install -y ./$file
+
+mdbook:
+  repo: rust-lang/mdBook
+  file: mdbook-@VER@-x86_64-unknown-linux-gnu.tar.gz
+  install: |
+    echo installing $name $ver
+    tar zxvf ./$file mdbook
+    mv -v mdbook $HOME/.local/bin/
+
+roswell:
+  repo: roswell/roswell
+  file: roswell_@VER@-1_amd64.deb
+  install: |
+    echo installing $name $ver
+    sudo apt install -y ./$file

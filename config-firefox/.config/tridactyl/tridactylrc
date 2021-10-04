@@ -1,0 +1,45 @@
+reloaddead
+# colorscheme dark
+
+set smoothscroll true
+# sanitise tridactyllocal tridactylsync
+set csp clobber
+set escapehatchsidebarhack false
+unbind <F1>
+# bindurl www.google.com f hint -Jc .rc>.r> a
+# bindurl www.google.com F hint -Jbc .rc>.r>a
+# set searchurls.d https://dict.cn/%s
+command githubcloneurl js {const [author,repo]= document.location.href.replace(/^https?:\/\//, "").split("/").slice(1,3); "git clone git@github.com:" + author + "/" + repo + ".git";}
+bind yg composite githubcloneurl | clipboard yank
+set searchurls.h https://hn.algolia.com/?query=%s
+set searchurls.w https://en.wikipedia.org/wiki/%s
+set searchurls.v https://www.youtube.com/results?search_query=%s
+set searchurls.explain https://www.explainxkcd.com/wiki/index.php?search=%s
+set searchurls.book http://gen.lib.rus.ec/search.php?req=%s
+set searchurls.book2 https://b-ok.cc/s/?q=%s
+set searchurls.sub http://subhd.com/search/%s
+set searchurls.ddg https://duckduckgo.com/?q=%s
+set searchurls.archive http://archive.is/search/?q=%s
+set searchurls.ud https://www.urbandictionary.com/define.php?term=%s
+
+set searchurls.cpp https://en.cppreference.com/mwiki/index.php?title=Special%3ASearch&search=%s
+set searchurls.python https://docs.python.org/3/search.html?q=%s
+set searchurls.rustdoc https://docs.rs/%s
+
+set newtab http://localhost:4000/src/Bento/index.html
+seturl https://keep.google.com allowautofocus false
+set editorcmd emacsclient -c
+unbind --mode=browser <C-6>
+unbind --mode=browser <CS-6>
+bind q tabdetach
+bind J tabnext
+bind K tabprev
+bind --mode=browser <C-1> winmerge
+bind --mode=browser <A-j> tabnext
+bind --mode=browser <A-k> tabprev
+bind --mode=browser <A-q> tabdetach
+bind --mode=browser <A-u> undo
+bind --mode=browser <A-o> tab #
+
+fixamo_quiet
+bind C js tri.native.run('org-capture -k u', "[[" + document.location.href + "][" + document.title + "]]\n" + (window.getSelection().toString() == "" ? "" : "#+begin_example\n"+window.getSelection().toString() + "\n#+end_example" ) )

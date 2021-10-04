@@ -1,0 +1,88 @@
+#!/bin/bash
+
+set -eo pipefail
+
+main() {
+    need_cmd sqlite3
+    need_cmd gawk
+    need_cmd column
+    need_cmd jq
+    need_cmd tput
+
+    bookmarkfile=$(find  ~/.mozilla/firefox -name places.sqlite | head -n1)
+    [ -f "$bookmarkfile" ] || err "bookmark file not found in default location"
+    tmpdir=$(mktemp -d)
+    trap '[[ "$tmpdir" =~ ^/tmp/.* ]] && rm -rf ${tmpdir:?hi dummy}' EXIT
+    cp "$bookmarkfile" "$tmpdir/"
+    cp "$bookmarkfile-wal" "$tmpdir/"
+
+    data=$(sqlite3 -line "${tmpdir}/places.sqlite" \
+        "SELECT url, moz_bookmarks.id, moz_bookmarks.title, parent FROM moz_bookmarks LEFT JOIN moz_places ON \
+        moz_bookmarks.fk=moz_places.id \
+        where type==1 \
+        order by moz_bookmarks.dateAdded desc" | gawk -f \
+        <( cat <<'EOF'
+! /^$/ {
+    match($0, /^\s*(\S+)\s*=\s*(.*)$/, arr);
+    if (append==1) {
+        printf ","
+    } else {
+        print "{"
+        append=1
+    }
+    k=arr[1]
+    v=arr[2]
+    gsub("\"", "\\\"", v)
+    print "\""k"\":\""v"\""
+ }
+
+ /^$/ {
+     print "}"
+     append=0
+ }
+
+ END {
+     if (append==1)
+         print "}"
+ }
+EOF
+         ))
+
+    brightwhite="\033[0;37;1m"
+    brightcyan="\033[0;36;1m"
+    brightblue='\033[0;34;1m'
+    reset='\033[0m'
+
+    sep=$'\t'
+
+    if ! id=$(jq -r '[.id, .parent, .title, .url] | @tsv' <<< $data \
+        | column --table --table-noheadings --separator "$sep" --output-separator="$sep" --table-columns=id,parent,title,url --table-hide=parent --table-truncate=title,url --table-right=id,title --output-width=$(($(tput cols)-4)) \
+        | awk -F"$sep" -vOFS=" " -vblue="${brightblue}" -vcyan="${brightcyan}" -vwhite="${brightwhite}" -vreset="${reset}" '{print cyan $1, white $2, blue $3 reset }' \
+        | fzf --ansi --tiebreak=index \
+        | awk '{print $1}'); then
+        err "interrupted"
+    fi
+    url=$(jq -r --arg id "$id" 'select(.id==$id)|.url' <<< $data)
+    firefox "$url" 
+}
+
+say() {
+    printf 'bookmarks: %s\n' "$1"
+}
+
+err() {
+    say "$1" >&2
+    exit 1
+}
+
+need_cmd() {
+    if ! check_cmd "$1"; then
+        err "need '$1' (command not found)"
+    fi
+}
+
+check_cmd() {
+    command -v "$1" > /dev/null 2>&1
+}
+
+main || exit 1

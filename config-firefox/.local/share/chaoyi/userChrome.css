@@ -1,0 +1,56 @@
+/* narrow fonts */
+#PlacesToolbarItems {
+  font-family: Roboto Condensed !important;
+}
+
+.tab {
+  font-family: Roboto Condensed !important;
+}
+
+/* hide */
+#TabsToolbar {
+  visibility: collapse !important;
+}
+
+/* #titlebar { */
+/*   visibility: collapse !important; */
+/* } */
+
+/* #PersonalToolbar { */
+/*     visibility: collapse !important; */
+/* } */
+
+#nav-bar {
+  visibility: collapse !important;
+}
+
+#sidebar-box[sidebarcommand="treestyletab_piro_sakura_ne_jp-sidebar-action"] #sidebar-header {
+  display: none;
+}
+
+#main-window[titlepreface^="[1] "] #sidebar-splitter {
+  width: 0px !important;
+}
+
+/* auto hide */
+@media (max-width: 800px) {
+  #sidebar-box {
+    visibility: collapse !important;
+  }
+}
+
+/* auto hide sidebar */
+#main-window[inFullscreen] #sidebar-box,
+#main-window[inFullscreen] #sidebar-splitter {
+  display: none !important;
+  width: 0px !important;
+}
+
+/* auto hide sidebar with only one tab (requires another extension) */
+#main-window[titlepreface^="[1] "] #sidebar-box[sidebarcommand="treestyletab_piro_sakura_ne_jp-sidebar-action"]  {
+  visibility: collapse !important;
+}
+
+#main-window[titlepreface^="[1] "]  #PersonalToolbar {
+  visibility: collapse !important;
+}

@@ -1,0 +1,111 @@
+#!/bin/bash
+
+case $1 in
+    -b)
+        bring_here="yes"
+        shift
+        ;;
+    -id)
+        get_id="yes"
+        shift
+        ;;
+    *)
+        [ -z "$1" ] && exit 1
+        ;;
+esac
+
+case $1 in
+    terminal)
+        search="xdo id -n default_terminal"
+        # run="alacritty --class default_terminal -e /usr/bin/tmux new -A -s default_terminal"
+        run="wezterm start --class default_terminal -- /usr/bin/tmux new-session -c \"$PWD\" -A -s default_terminal &"
+        # search="xdo id -N default_terminal"
+        # run="st -c default_terminal -f 'Sarasa Mono SC:pixelsize=16:antialias=true:autohint=true' -e /usr/bin/tmux new -A -s default_terminal"
+        ;;
+    editor)
+        search="xdo id -a $1"
+        run="emacsclient -c -F \"((name . \\\"$1\\\") (height . (text-pixels . 2000)) (width . (text-pixels . 1412)))\" &"
+        ;;
+    notes)
+        search="xdo id -a $1"
+        run="emacsclient -c -F \"((name . \\\"$1\\\"))\" -e \"(find-file org-default-notes-file)\" &"
+        ;;
+    todo)
+        search="xdo id -a $1"
+        run="emacsclient -c -F \"((name . \\\"$1\\\"))\" -e \"(find-file (+org-capture-todo-file))\" &"
+        ;;
+    journal)
+        search="xdo id -a $1"
+        run="emacsclient -c -F \"((name . \\\"$1\\\"))\" -e \"(find-file +org-capture-journal-file)\" &"
+        ;;
+    scratch)
+        search="xdo id -a $1"
+        run="emacsclient -c -F \"((name . \\\"$1\\\"))\" ~/$(date +%V-%u-%p) &"
+        ;;
+    code)
+        search="xdo id -N Code"
+        run="gtk-launch code-insiders"
+        ;;
+    telegram)
+        search="xdo id -N TelegramDesktop"
+        run="telegram-desktop || flatpak run org.telegram.desktop"
+        ;;
+    calibre)
+        search="xdo id -N calibre"
+        run="flatpak run com.calibre_ebook.calibre"
+        ;;
+    xournalpp)
+        search="xdo id -N xournalpp"
+        run="flatpak run com.github.xournalpp.xournalpp"
+        ;;
+    firefox)
+        search="xdo id -N Firefox-esr -n Navigator"
+        run="firefox"
+        ;;
+    factorio)
+        search="xdo id -N factorio"
+        run="/home/chaoyi/factorio/bin/x64/factorio"
+        ;;
+    *)
+        search="xdo id -N $1"
+        shift
+        run="$@"
+        ;;
+esac
+
+# NOTE cannot find option to search by instancename in xdotool so use xdo instead
+
+wids=$(eval $search)
+
+if [ -n "$get_id" ]; then
+    readarray -t array <<< "$wids"
+    echo "${array[0]}"
+    exit 0
+fi
+
+
+{ read -r wid1 && read -r wid2; } <<< "$wids"
+
+if [ -z "$wid1" ]; then
+     echo running $run
+     eval "$run"
+     $search -m
+     exit 0
+fi
+
+wid0=$(xdotool getactivewindow)
+if [ -n "$wid2" ] && [ "$wid1" = "$wid0" ]; then
+    wid1=$wid2
+fi
+echo switch to "$wid1"
+
+current_desktop=$(xdotool get_desktop)
+window_desktop=$(xdotool get_desktop_for_window $wid1)
+
+if [ -n "$bring_here" ]; then
+    if [ "$current_desktop" != "$window_desktop" ]; then
+        xdotool set_desktop_for_window "$wid1" "$current_desktop"
+    fi
+fi
+# xdo activate seems buggy in debian
+xdotool windowactivate --sync "$wid1" > /dev/null

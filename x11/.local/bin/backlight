@@ -1,0 +1,76 @@
+#!/bin/bash
+
+incr_flag=
+decr_flag=
+set_flag=
+while getopts "i:d:s:" name
+do
+    case "$name" in
+        i)
+            incr_value="$OPTARG"
+            incr_flag=1
+            ;;
+        d)
+            decr_value="$OPTARG"
+            decr_flag=1
+            ;;
+        s)
+            set_value="$OPTARG"
+            set_flag=1
+            ;;
+        ?)
+        printf "Usage: %s: [-i value] [-s value] [monitor_name]\n" $0
+        exit 2
+        ;;
+    esac
+done
+shift $((OPTIND-1))
+
+hostname=$(hostname)
+focused_monitor=${1:-$(bspc query -M -n focused --names)}
+key="${hostname} ${focused_monitor}"
+
+case "$key" in
+    "desktop DP-0")
+        getcmd="sudo modprobe i2c-dev; sudo ddcutil -d 2 getvcp 10 | awk '{match(\$0, /current value =\s*([0-9]+)/, arr); print arr[1]}'"
+        setcmd="sudo modprobe i2c-dev; sudo ddcutil -d 2 setvcp 10 %s"
+        ;;
+    "desktop DP-4" | "nzxt HDMI-0" | "laptop DP-1-1" | "laptop DP-1")
+        getcmd="sudo modprobe i2c-dev; sudo ddcutil -d 1 getvcp 10 | awk '{match(\$0, /current value =\s*([0-9]+)/, arr); print arr[1]}'"
+        setcmd="sudo modprobe i2c-dev; sudo ddcutil -d 1 setvcp 10 %s"
+    ;;
+    "laptop eDP-1" | "laptop eDP-1-1")
+        getcmd="xbacklight -get"
+        setcmd="xbacklight -set %s"
+        ;;
+    "x1yoga eDP-1")
+        getcmd="xbacklight -get"
+        setcmd="xbacklight -set %s"
+        ;;
+    *)
+    printf "%s: unknown machine setup: %s\n" "$0" "$key"
+    exit 1
+esac
+
+
+# set brightness
+if [ -n "$set_flag" ] && [ -n "$set_value" ]; then
+    eval "$(printf "$setcmd" "$set_value")"
+    exit 0
+fi
+
+if [ -n "$incr_flag" ] || [ -n "$decr_flag" ]; then
+    cur_brightness=$(eval "$getcmd")
+    cur_brightness=${cur_brightness/.*}
+    if [ -n "$incr_value" ]; then
+        new_brightness=$((cur_brightness+incr_value))
+    else
+        new_brightness=$((cur_brightness-decr_value))
+    fi
+    [ $new_brightness -gt 100 ] && new_brightness=100
+    [ $new_brightness -lt 0 ] && new_brightness=0
+    eval "$(printf "$setcmd" "$new_brightness")"
+    exit 0
+fi
+
+echo $(eval "$getcmd")

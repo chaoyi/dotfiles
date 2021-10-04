@@ -1,0 +1,127 @@
+#!/usr/bin/env python3
+
+# modified from https://gist.githubusercontent.com/ei-grad/4d9d23b1463a99d24a8d/raw/rotate.py
+
+import os
+import sys
+import subprocess
+from pathlib import Path
+
+def get_monitors():
+    monitors_order = ["eDP-1", "ABC"]
+    connected_monitors = [str(line, 'utf-8').split()[-1] for line in subprocess.check_output(['xrandr', '--listmonitors']).splitlines()[1:]]
+    monitors = []
+    for monitor in monitors_order:
+        if monitor in connected_monitors:
+            monitors.append(monitor)
+    for monitor in connected_monitors:
+        if monitor not in monitors:
+            monitors.append(monitor)
+    return monitors
+
+file = Path("/tmp/disable_autorotate.lock")
+lastRotation = 0
+
+devices = [str(line, 'utf-8') for line in subprocess.check_output(['xinput', '--list', '--name-only']).splitlines()]
+monitors = get_monitors()
+internal_monitor = monitors[0]
+
+touchscreen_names = ['touchscreen', 'wacom']
+ignores = ['Wacom Pen and multitouch sensor Pen']
+touchscreens = [i for i in devices if any(j in i.lower() for j in touchscreen_names) and i not in ignores]
+
+disable_touchpads = False
+
+touchpad_names = ['touchpad', 'trackpoint']
+touchpads = [i for i in devices if any(j in i.lower() for j in touchpad_names)]
+
+STATES = [
+    {'rot': 'normal', 'coord': '1 0 0 0 1 0 0 0 1', 'touchpad': 'enable'},
+    {'rot': 'left', 'coord': '0 -1 1 1 0 0 0 0 1', 'touchpad': 'disable'},
+    {'rot': 'inverted', 'coord': '-1 0 1 0 -1 1 0 0 1', 'touchpad': 'disable'},
+    {'rot': 'right', 'coord': '0 1 0 -1 0 1 0 0 1', 'touchpad': 'disable'}
+]
+
+
+def rotate(state):
+    s = STATES[state]
+    subprocess.check_call(['xrandr', '--output', internal_monitor, '--rotate', s['rot']])
+    for dev in touchscreens if disable_touchpads else (touchscreens + touchpads):
+        subprocess.check_call([
+            'xinput', 'set-prop', dev,
+            'Coordinate Transformation Matrix',
+        ] + s['coord'].split())
+    if disable_touchpads:
+        for dev in touchpads:
+            subprocess.check_call(['xinput', s['touchpad'], dev])
+    subprocess.check_call([
+        'killall', '-USR1', 'polybar'
+    ])
+    subprocess.check_call([os.path.expanduser("~/.fehbg")])
+
+    fix_touch_output()
+
+def autorotate():
+    proc = subprocess.Popen(['monitor-sensor'], stdout=subprocess.PIPE)
+    for line in proc.stdout:
+        if file.is_file():
+            continue
+        line = str(line, 'utf-8')
+        if 'orientation changed' in line:
+            cmd = line.split()[3]
+            state = {"normal": 0, "left-up": 1, "bottom-up": 2, "right-up": 3}[cmd]
+            lastRotation = state
+            rotate(state)
+
+
+def fix_touch_output():
+    for dev in touchscreens:
+        subprocess.check_call([
+            'xinput', 'map-to-output', dev, internal_monitor
+        ])
+
+# def usage():
+#     print("usage: autorotate [autorotate | rotate [normal|inverted|left|right|clockwise|counterclockwise]]")
+
+def toggle_autorotate():
+    if file.is_file():
+        file.unlink()
+        subprocess.check_call(['notify-send', 'autorotate enabled'])
+        rotate(lastRotation)
+    else:
+        file.touch()
+        subprocess.check_call(['notify-send', 'autorotate disabled'])
+
+def main():
+    if len(sys.argv) == 2:
+        arg = sys.argv[1]
+        if arg == "toggle":
+            toggle_autorotate()
+            return
+
+        dirs = ["normal", "left", "inverted", "right"]
+        try:
+            idx = dirs.index(arg)
+        except ValueError:
+            idx = None
+        if idx is not None:
+            rotate(idx)
+            return
+
+        inc = -1 if arg == "clockwise" else 1
+        proc = subprocess.Popen(['xrandr', '-q', '--verbose'], stdout=subprocess.PIPE)
+        for line in proc.stdout:
+            line = str(line, 'utf-8')
+            if internal_monitor in line:
+                current_rotation = line.split()[5]
+                break
+        cur_idx = dirs.index(current_rotation)
+        next_idx = (cur_idx + inc) % 4
+        rotate(next_idx)
+        return
+
+    autorotate()
+
+
+if __name__ == '__main__':
+    main()

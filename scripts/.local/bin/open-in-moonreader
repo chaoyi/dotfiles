@@ -1,0 +1,12 @@
+#!/bin/bash
+
+file=$(realpath "$1")
+file=${file##$HOME/}
+if ! [[ "$file" =~ ^Books/* ]]; then
+    echo can only open file in books directory
+    exit 1
+fi
+
+url="file:///sdcard/$file"
+/usr/bin/anbox launch --action=android.intent.action.MAIN --package=com.flyersoft.moonreaderp --component=com.flyersoft.moonreaderp.ActivityMain
+adb shell "am start -a android.intent.action.VIEW \"$url\""

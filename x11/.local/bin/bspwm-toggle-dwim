@@ -1,0 +1,18 @@
+#!/bin/bash
+
+# if only one window, toggle between floating
+num_windows=$(bspc query -d -N focused | wc -l)
+if [ "$num_windows" -eq 1 ]; then
+        bspc node -t "~floating"
+        exit 0
+fi
+
+# if floating, set to tiled
+current_window_state=$(bspc query -T -n | jq -r '.client.state')
+if [ "$current_window_state" = "floating" ]; then
+        bspc node -t tiled
+        exit 0
+fi
+
+# toggle between titled monocle
+bspc desktop -l next

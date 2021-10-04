@@ -1,0 +1,524 @@
+# reload sxhkdrc
+super + control + r
+	pkill -USR1 -x sxhkd
+
+##################################################
+# launch stuff
+##################################################
+
+# launcher
+super + grave
+	launcher
+
+# terminal
+super + Return
+	run -b terminal
+
+# hide terminal
+super + shift + Return
+	bspc node $(run -id terminal) -d 'any.!occupied.local'
+
+# new terminal
+super + ctrl + Return
+	alacritty
+
+# rofi launcher
+super + d
+	spawn-next-in-empty-desktop; rofi -modi drun -show drun -theme nord -display-drun "❯ "
+
+# launch emacs
+super + e
+	run -b editor
+
+# hide emacs
+super + shift + e
+	bspc node $(run -id editor) -d 'any.!occupied.local'
+
+# launch firefox
+super + f
+	run firefox # run -b firefox && bspc node -s biggest.local
+
+# hide firefox
+super + F
+	bspc node $(run -id firefox) -d 'any.!occupied.local'
+
+# launch vscode
+super + v
+	run code
+
+# launch telegram
+super + t
+	telegram-desktop && run -b telegram
+
+# hide telegram
+super + shift + t
+	bspc node $(run -id telegram) -d 'any.!occupied.local'
+
+# launch treesheets notes
+super + Escape
+	run Treesheets treesheets ~/notes/startpage.cts
+
+# launch todo file
+super + Tab
+	run todo
+
+# searchurls
+super + s
+	searchurls_rofi
+
+# launch factorio
+super + g
+	run factorio
+
+# send away current node
+super + z
+	bspc node -d 'any.!occupied.local'
+
+# org capture note
+super + c
+	org-capture -k "t"
+
+# org capture journal
+super + j
+	org-capture -k "j"
+
+# org capture open journal
+mod3 + j
+	 run journal
+
+# org capture todo
+mod3 + t
+	org-capture -k "t"
+
+# org capture notes
+mod3 + n
+	org-capture -k "n"
+
+# open leetcode
+mod3 + l
+	firefox "https://leetcode.com/problemset/all/"
+
+
+##################################################
+# quick start using fzf
+##################################################
+
+# select bookmark
+super + B
+	alacritty --class bookmarks -e bookmarks
+
+# select book
+super + b
+	XDG_DATA_HOME=/home/chaoyi/Books/books rofi -show drun -theme books -drun-categories Books
+	# alacritty --class books -e books
+
+# open wikipedia search
+super + w
+	firefox "https://en.wikipedia.org/wiki/Special:Search"
+
+# select dictionary word
+super + W
+	alacritty --class words -e words
+
+#################################################
+# utilities
+##################################################
+
+# turn off monitor
+	# sleep 0.5; xset dpms force standby
+
+# set backlight brightness maximum 100
+	# bspc query -M --names | xargs -n1 backlight -s 100
+
+# set backlight brightnessto 75
+	# bspc query -M --names | xargs -n1 backlight -s 75
+
+# set backlight brightnessto 50
+	# bspc query -M --names | xargs -n1 backlight -s 50
+
+# set backlight brightnessto 25
+	# bspc query -M --names | xargs -n1 backlight -s 25
+
+# set backlight brightnessto 10 dimm
+	# bspc query -M --names | xargs -n1 backlight -s 10
+
+# set backlight brightness minimum 0 dark
+	# bspc query -M --names | xargs -n1 backlight -s 0
+
+# increase backlight brightness
+XF86MonBrightnessUp
+	bspc query -M --names | xargs -n1 backlight -i 5
+
+# decrease backlight brightness
+XF86MonBrightnessDown
+	bspc query -M --names | xargs -n1 backlight -d 5
+
+# raise audio volume
+XF86AudioRaiseVolume
+	amixer -q set Master 5%+ unmute
+
+# lower audio volume
+XF86AudioLowerVolume
+	amixer -q set Master 5%- unmute
+
+# toggle mute audio volume
+XF86AudioMute
+	amixer -q set Master toggle
+
+# rotate window
+XF86RotateWindows
+	autorotate clockwise
+
+# toggle rotate window
+XF86Display
+	autorotate toggle
+
+
+# toggle capture (mic) on/off
+F20
+	amixer -q set Capture toggle
+
+# switch audio to hdmi2 LG 27
+	# switch-audio hdmi2
+
+# switch audio to front headphone
+	# switch-audio front
+
+# take screenshot and put in clipboard
+Print
+	shotgun -g $(hacksaw) - | tee "$HOME/Pictures/Screenshots/$(date --iso-8601=seconds).png" | xclip -t 'image/png' -selection clipboard
+	# sleep 0.2; scrot -s '/home/chaoyi/Pictures/Screenshots/%Y-%m-%d-%H-%M-%S.png' -e 'xclip -selection clipboard -target image/png -i $f'
+
+# take screen shot of current active window and put in clipboard
+shift + Print
+	shotgun -i $(xdotool getactivewindow) - | tee "$HOME/Pictures/Screenshots/$(date --iso-8601=seconds).png" | xclip -t 'image/png' -selection clipboard
+
+{ctrl + Print, super + F20}
+	file="$HOME/Pictures/Screenshots/$(date --iso-8601=seconds)"; shotgun -g $(timeout 10 hacksaw) - | tee "$file.png" | xclip -t 'image/png' -selection clipboard && convert "$file.png" "$file.pdf" && xournalpp "$file.pdf"
+
+super + F19
+	bspc node -f next.leaf; bspc desktop -l monocle
+
+button9
+	bspc desktop -f "prev.occupied.local"
+
+button8
+	bspc desktop -f "next.occupied.local"
+
+# # take fullscreen screenshot and put in clipboard
+# shift + Print
+# 	sleep 0.2; scrot '/home/chaoyi/Pictures/Screenshots/%Y-%m-%d-%H-%M-%S.png' -e 'xclip -selection clipboard -target image/png -i $f'
+
+# single screen landscape
+	# fish -c "monitor single landscape"
+
+# single screen portrait
+	# fish -c "monitor single portrait"
+
+# dual screen landscape
+	# fish -c "monitor dual landscape"
+
+# dual screen portrait
+	# fish -c "monitor dual portrait"
+
+##################################################
+# wm
+##################################################
+
+# resize node left
+super + shift + {Left, h}
+	bspc node @west -r -50 || bspc node @east -r -50
+
+# resize node down
+super + shift + {Down, j}
+	bspc node @south -r +50 || bspc node @north -r +50
+
+# resize node up
+super + shift + {Up, k}
+	bspc node @south -r -50 || bspc node @north -r -50
+
+# resize node right
+super + shift + {Right, l}
+	bspc node @west -r +50 || bspc node @east -r +50
+
+# switch desktop to 1
+super + 1
+	bspc desktop -f focused:^1
+
+# switch desktop to 2
+super + 2
+	bspc desktop -f focused:^2
+
+# switch desktop to 3
+super + 3
+	bspc desktop -f focused:^3
+
+# switch desktop to 4
+super + 4
+	bspc desktop -f focused:^4
+
+# switch desktop to 5
+super + 5
+	bspc desktop -f focused:^5
+
+# switch desktop to 6
+super + 6
+	bspc desktop -f focused:^6
+
+# switch desktop to 7
+super + 7
+	bspc desktop -f focused:^7
+
+# switch desktop to 8
+super + 8
+	bspc desktop -f focused:^8
+
+# switch desktop to 9
+super + 9
+	bspc desktop -f focused:^9
+
+# send node to desktop 1
+super + ctrl + 1
+	bspc node -d focused:^1 -f
+
+# send node to desktop 2
+super + ctrl + 2
+	bspc node -d focused:^2 -f
+
+# send node to desktop 3
+super + ctrl + 3
+	bspc node -d focused:^3 -f
+
+# send node to desktop 4
+super + ctrl + 4
+	bspc node -d focused:^4 -f
+
+# send node to desktop 5
+super + ctrl + 5
+	bspc node -d focused:^5 -f
+
+# send node to desktop 6
+super + ctrl + 6
+	bspc node -d focused:^6 -f
+
+# send node to desktop 7
+super + ctrl + 7
+	bspc node -d focused:^7 -f
+
+# send node to desktop 8
+super + ctrl + 8
+	bspc node -d focused:^8 -f
+
+# send node to desktop 9
+super + ctrl + 9
+	bspc node -d focused:^9 -f
+
+# send node to first unoccupied desktop
+super + ctrl + space
+	bspc node -d 'any.!occupied.local' --follow
+
+# rename desktop
+super + comma
+	name=$(rofi -dmenu -p rename❯ ); [ $? -eq 0 ] && bspc desktop --rename "$name"
+
+# reset desktop names
+	# ~/.config/bspwm/bspwm_autorename
+
+# rearange desktop left
+super + less
+	bspc desktop -s prev -f
+
+# rearange desktop right
+super + greater
+	bspc desktop -s next -f
+
+# close node
+super + q
+	bspc node -c
+
+# kill node
+super + ctrl + q
+	bspc node -k
+
+# # alternate fullscreen toggle dwim, between float/fullscreen and tiled/monocle
+# super + space
+# 	bspwm_toggle_dwim
+
+# toggle between titled and monocle
+super + space
+	bspc desktop -l next
+
+
+# alternate node state fullscreen
+F11
+	bspc node -t \~fullscreen
+
+# set node state tiled
+super + ctrl + t
+	bspc node -t \~tiled
+
+# set node state floating
+super + ctrl + f
+	bspc node -t \~floating
+
+# set node flag marked
+super + ctrl + m
+	bspc node -g marked
+
+# set node flag locked
+super + ctrl + l
+	bspc node -g locked
+
+# set node flag sticky
+super + ctrl + s
+	bspc node -g sticky
+
+# set node flags private
+super + ctrl + p
+	bspc node -g private
+
+# change focus to left node
+super + Left
+	bspc node -f west.local
+
+# change focus to down node
+super + Down
+	bspc node -f south.local
+
+# change focus to up node
+super + Up
+	bspc node -f north.local
+
+# change focus to right node
+super + Right
+	bspc node -f east.local
+
+# # change focus to left node alternative
+# super + h
+# 	bspc node -f west.local
+
+# # change focus to down node alternative
+# super + j
+# 	bspc node -f south.local
+
+# # change focus to up node alternative
+# super + k
+# 	bspc node -f north.local
+
+# # change focus to right node alternative
+# super + l
+# 	bspc node -f east.local
+
+# focus next node in desktop
+super + o
+	bspc node -f next.local.leaf
+
+# focus next occupied desktop
+super + O
+	bspc desktop -f "next.occupied.local"
+
+# focus next desktop
+super + n
+	bspc desktop -f next
+
+# focus prev desktop
+super + p
+	bspc desktop -f prev
+
+# # focus next desktop in history
+# super + bracketright
+# 	bspc wm --record-history off; bspc desktop -f newer; bspc wm --record-history on
+
+# focus prev desktop in history
+super + shift + 8
+	bspc wm --record-history off; bspc desktop -f older; bspc wm --record-history on
+
+# change focus to left monitor
+super + bracketleft
+	bspc monitor -f west
+
+# change focus to right monitor
+super + bracketright
+	bspc monitor -f east
+
+# move node to direction left
+super + ctrl + Left
+	bspc node -s west
+
+# move node to direction down
+super + ctrl + Down
+	bspc node -s south
+
+# move node to direction up
+super + ctrl + Up
+	bspc node -s north
+
+# move node to direction right
+super + ctrl + Right
+	bspc node -s east
+
+# # move node to left desktop
+# super + ctrl + bracketleft
+# 	bspc node --to-desktop prev
+
+# # move node to left desktop
+# super + ctrl + bracketright
+# 	bspc node --to-desktop next
+
+# move node to left monitor
+super + ctrl + bracketleft
+	bspc node --to-monitor west -f
+
+# move node to right monitor
+super + ctrl + bracketright
+	bspc node --to-monitor east -f
+
+# rotate 180
+super + r
+	bspc node @/ -R 180
+
+# swap current node with biggest
+super + m
+	bspc node -s biggest.local
+
+##################################################
+# seldom used
+##################################################
+
+# reset focused desktop window to zero
+super + 0
+	bspc config -d focused window_gap 0
+
+# decrease focused desktop window gap
+super + equal
+	bspc config -d focused window_gap $(($(bspc config -d focused window_gap) - 2 ))
+
+# increase focused desktop window gap
+super + minus
+	bspc config -d focused window_gap $(($(bspc config -d focused window_gap) + 2 ))
+
+# send Page_Down to other window
+super + @Page_Down
+	old_id=$(xdo id); xdotool windowactivate --sync $(xdo id -dr | head -n1) key --clearmodifiers Page_Down; xdotool windowactivate $old_id
+
+# send Page_Up to other window
+super + @Page_Up
+	old_id=$(xdo id); xdotool windowactivate --sync $(xdo id -dr | head -n1) key --clearmodifiers Page_Up; xdotool windowactivate $old_id
+
+# # quit
+# super + shift + {q,r}
+# 	bspc {quit,wm -r}
+
+# # focus the last node
+# super + Tab
+# 	bspc node -f last
+
+# # focus next node in desktop
+# super + grave
+# 	bspc node -f next.local
+
+# mom tiaowu wudao mama
+	# nautilus /mnt/installers/mom &
+
+# python prelude
+	# xdotool key Page_Up type "from collections import defaultdictfrom dataclasses import dataclass"

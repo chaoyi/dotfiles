@@ -1,0 +1,19 @@
+#!/bin/bash
+
+case "$1" in
+    hdmi2)
+        sink="alsa_output.pci-0000_07_00.1.hdmi-stereo-extra2"
+        pacmd set-card-profile alsa_card.pci-0000_07_00.1 output:hdmi-stereo-extra2
+        ;;
+    # hdmi)
+    #     sink="alsa_output.pci-0000_0f_00.1.hdmi-stereo"
+    #     pacmd set-card-profile alsa_card.pci-0000_0f_00.1 output:hdmi-stereo
+    #     ;;
+    front|*)
+        # pactl list short sinks
+        sink="alsa_output.pci-0000_0a_00.4.analog-stereo"
+        ;;
+esac
+
+pacmd set-default-sink ${sink}
+pacmd list-sink-inputs |grep "index: "|awk '{print $2}'|xargs -n1 -I{} pacmd move-sink-input {} ${sink}

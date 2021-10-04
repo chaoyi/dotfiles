@@ -1,0 +1,142 @@
+#!/usr/bin/env bash
+# set -euo pipefail
+
+icon0=""
+# icon0=""
+# icon0=""
+
+get_icon() {
+    case "$1" in
+        "Alacritty" | "org.wezfurlong.wezterm" | "default_terminal")
+            # echo ""
+            echo ""
+            ;;
+        "Firefox" | "Firefox-esr")
+            echo ""
+            ;;
+        "Emacs")
+            echo "פֿ"
+            # echo ""
+            ;;
+        "TelegramDesktop")
+            echo ""
+            ;;
+        "calibre")
+            echo ""
+            ;;
+        "Syncthing GTK")
+            echo ""
+            ;;
+        "Element")
+            echo ""
+            ;;
+        "Xournalpp")
+            echo ""
+            ;;
+        "Zathura")
+            echo ""
+            ;;
+        "Code")
+            echo ""
+            ;;
+        "Treesheets")
+            echo ""
+            ;;
+        "Pcmanfm")
+            echo ""
+            ;;
+        "Spotify")
+            echo "ﱘ"
+            ;;
+        "anbox")
+            case "$3" in
+                "Moon+ Reader Pro")
+                    echo "🌙"
+                    ;;
+                "Eudic")
+                    echo "﬜"
+                    ;;
+                *)
+                    echo "$3"
+                    ;;
+            esac
+            ;;
+        *)
+            echo "$icon0"
+            ;;
+    esac
+}
+
+has_icons() {
+    if [[ "$1" = *[![:ascii:]]* ]]; then
+        echo "Contain Non-ASCII"
+    fi
+}
+
+get_icon_from_id() {
+    id="$1"
+    eval $(xprop -id "$id" WM_CLASS WM_NAME | gawk 'match($0, /^WM_CLASS\(STRING\) = "(.*?)", "(.*?)"$/, a) {printf "classname=\"%s\"\nclass=\"%s\"\n", a[1], a[2]}; match($0, /^WM_NAME\(STRING\) = "(.*?)"/, a) {printf "wmname=\"%s\"\n", a[1]}')
+    new_name=$(get_icon "$class" "$classname" "$wmname" "$id")
+    echo $new_name
+}
+
+rename() {
+    force_rename=$1
+    for desktop_id in $(bspc wm -d | jq '.monitors[]|.desktops[]|.id'); do
+        data=$(bspc query -T -d "$desktop_id")
+        name=$(jq -r '.name' <<< "$data")
+        occupied=$(jq -r '.root!=null' <<< "$data")
+        if [ "$occupied" = "false" ]; then
+            if [ "$name" != "$icon0" ]; then
+               echo $idx reset from "$name" to $icon0
+               bspc desktop "$desktop_id" --rename "$icon0"
+            fi
+        else
+            if [ -n "$(has_icons $name)" ] || [ -z "$name" ] || [ -n "$force_rename" ]; then
+                ids=($(bspc query -T -d "$desktop_id" | jq '[..|select(.client? != null)|.client.tiledRectangle as $r|{id, area: ($r.width * $r.height)}]|sort_by(.area)|.[].id'))
+                output=""
+                for i in "${!ids[@]}"; do
+                    id=${ids[$i]}
+                    new_name=$(get_icon_from_id $id)
+                    if [ $i != 0 ]; then
+                        output=" $output"
+                    fi
+                    output="$new_name$output"
+                done
+                if [ -n "$output" ]; then
+                    echo renaming to "$output"
+                    bspc desktop "$desktop_id" --rename "$output"
+                fi
+            else
+                echo $idx skip renaming "$name"
+            fi
+        fi
+    done
+}
+
+while getopts "f" opt; do
+    case "$opt" in
+        f)
+            foreground_daemon_flag=1
+            ;;
+        ?)
+        printf "Usage: %s [-f]\n" "$0"
+        exit 2
+        ;;
+    esac
+done
+
+if [ -n "$foreground_daemon_flag" ]; then
+    echo "starting $0 as foreground daemon"
+    bspc subscribe all | while read -r -a msg; do
+        cmd=${msg[0]}
+        case "$cmd" in
+            node_add | node_remove | node_swap | node_transfer | node_geometry | node_state )
+                echo "cmd is $cmd"
+                rename
+                ;;
+        esac
+    done
+else
+    rename "force"
+fi

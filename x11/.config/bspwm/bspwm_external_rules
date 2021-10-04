@@ -1,0 +1,33 @@
+#!/bin/sh
+
+wid=$1
+class=$2
+instance=$3
+# consequences=$4
+
+case "$class" in
+"Emacs")
+        title=$(xdotool getwindowname "$wid")
+        case "$title" in
+        "doom-capture")
+                echo "state=floating center=true rectangle=1920x480+0+0"
+                ;;
+        "todo" | "notes")
+                echo "state=tiled"
+                ;;
+        # "editor")
+        #         echo "follow=on desktop=^2"
+        #         ;;
+        *)
+                echo "state=tiled"
+                ;;
+        esac
+        ;;
+esac
+
+case "$instance:$class" in
+     "zathura:Zathura" | "org.pwmt.zathura:Zathura" | "calibre-ebook-viewer:calibre")
+        freedesktop=$(bspc query -D -d 'any.!occupied')
+        echo "state=floating center=true rectangle=1414x2000+0+0 desktop=$freedesktop follow=on"
+        ;;
+esac

@@ -1,0 +1,86 @@
+#!/usr/bin/env bash
+
+bspc config remove_disabled_monitors true
+bspc config remove_unplugged_monitors true
+bspc config focus_follows_pointer true
+bspc config borderless_monocle true
+bspc config gapless_monocle false
+bspc config single_monocle true
+bspc config border_width 0
+bspc config window_gap 10
+bspc config automatic_scheme alternate
+bspc config split_ratio 0.55
+
+# bspc config focused_border_color "#202020"
+# bspc config normal_border_color "#000000"
+# bspc config top_padding 30
+# bspcq config left_padding 0
+# bspc config right_padding 30
+
+case "$(hostname)" in
+  desktop)
+    MONITOR=DP-0
+    # bspc config -m "$MAIN_MONITOR" left_padding 5
+    ;;
+  laptop)
+    MONITOR=DP-1-1
+    ;;
+esac
+
+MONITORS=( $(bspc query -M --names) )
+# MONITORS=( $(xrandr -q | grep ' connected' | cut -d' ' -f1) )
+bspc query -M "$MONITOR" || MONITOR="${MONITORS[0]}"
+export MONITOR
+
+if [ "${MONITORS[0]}" = "${MONITOR}" ]; then
+  OTHER_MONITOR="${MONITORS[1]}"
+else
+  OTHER_MONITOR="${MONITORS[0]}"
+fi
+
+if [ -n "$OTHER_MONITOR" ]; then
+  bspc wm -O "$OTHER_MONITOR" "$MONITOR"
+  bspc monitor "$MONITOR" -d "" "" "" "" "" "" "" "" ""
+  bspc monitor "$OTHER_MONITOR" -d "" "" "" "" "" "" "" "" ""
+  bspc monitor "$OTHER_MONITOR" -s "$MONITOR"
+else
+  bspc monitor "$MONITOR" -d "" "" "" "" "" "" "" "" ""
+fi
+
+# Rules
+bspc rule -r '*'
+
+# bspc rule -a Firefox desktop=^1 private=on locked=on follow=on
+# bspc rule -a Firefox desktop=^1 private=on follow=on
+bspc rule -a 'Syncthing GTK' desktop=^8
+bspc rule -a 'Alacritty:books' state=fullscreen center=true # rectangle=1414x2000+0+0
+bspc rule -a 'Alacritty:bookmarks' state=fullscreen center=true # rectangle=3600x2000+0+0
+bspc rule -a 'Alacritty:words' state=floating center=true rectangle=400x2000+0+0
+bspc rule -a 'TelegramDesktop' state=floating rectangle=1000x1414+1850+685
+bspc rule -a 'Onboard' state=floating
+bspc rule -a feh state=fullscreen
+bspc config external_rules_command "$HOME/.config/bspwm/bspwm_external_rules"
+
+# polybar
+~/.config/polybar/launch.sh &
+~/.config/bspwm/bspwm_autorename -f > /var/tmp/bspwm_autorename.log &
+
+# compositor
+# case "$(hostname)" in
+#   desktop)
+    picom --experimental-backends &
+#     ;;
+# esac
+
+# notification daemon
+dunst &
+
+# wallpaper
+~/.fehbg &
+# cd ~/src/desktop/dynamic-wallpaper && ./test.sh -s firewatch3 &
+
+# autostart, after rules
+dex -a -s /etc/xdg/autostart:$HOME/.config/autostart &
+
+# keyboard daemon
+sxhkd &

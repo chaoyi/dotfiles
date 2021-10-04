@@ -1,0 +1,4 @@
+configuration {
+    font: "Sarasa Mono SC 20";
+    theme: "nord";
+}
